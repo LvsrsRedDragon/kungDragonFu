@@ -1,40 +1,56 @@
 extends KinematicBody2D
 
-
 var state = ["normal", "attacking", "dead", "crouched", "spAttacking"]
 var side = "right"
+
 export var gravity = 100
 export var gMax = 500
 export var moveSpeed = 400
-var motion = Vector2.ZERO
 export var jumpPower = -300
+var motion = Vector2.ZERO
+
 var playerHP = 100.0
 var atkType = "punch"
 var spType = "dash"
 var chargeAtk = "false"
 var doubleJump = "false"
 var playerArmor = 1
+
 var atkBuffer = 0
 var atkDirection = 1
 var strike = preload("res://objects/strikeMelee.tscn")
 var strikeSpeed = 500
-# Called when the node enters the scene tree for the first time.
 
+onready var sprite = $Player/AnimatedSprite2
 
-#func fireAttack():
-#	strike.move = strike.position.global_translation
-#	strike.rotation = 
-#
+# ---------------------------------------------------------
+
 func _ready():
 	state = "normal"
-		
+
+func _physics_process(delta):
+	move_and_slide(motion, Vector2.UP)
+	basic_states()
+	if Input.is_action_pressed("moveLeft"):
+		side = "left"
+	elif Input.is_action_pressed("moveRight"):
+		side = "right"
+	if gravity <= gMax:
+		motion.y += gravity
+	change_direction()
+
+# ---------------------------------------------------------
+
 func change_direction():
 	if side == "left":
-		get_node( "Sprite" ).set_flip_h( false )
+		sprite.set_flip_h( true )
 		atkDirection = -1
+		$PositionStrike.position.x = -15
 	elif side == "right":
-		get_node( "Sprite" ).set_flip_h( true )
+		sprite.set_flip_h( false )
 		atkDirection = 1
+		$PositionStrike.position.x = 15
+
 func basic_platforming():
 	if Input.is_action_pressed("moveLeft"):
 			motion.x = -moveSpeed
@@ -47,6 +63,7 @@ func basic_platforming():
 			motion.y = jumpPower
 		else:
 			pass
+
 func basic_states():
 	if state == "normal":
 		basic_platforming()
@@ -70,20 +87,22 @@ func basic_states():
 		get_node("Player/AnimatedSprite2").frame = atkBuffer
 		get_node("Player/AnimatedSprite2").animation = "Attack"
 		if atkBuffer <= 2:
+			print (atkBuffer)
 			if Input.is_action_just_pressed("Attack"):
 				get_node("atkTimer").start()
 				atkBuffer += 1
-func _physics_process(delta):
-	move_and_slide(motion, Vector2.UP)
-	basic_states()
-	if Input.is_action_pressed("moveLeft"):
-		side = "left"
-	elif Input.is_action_pressed("moveRight"):
-		side = "right"
-	if gravity <= gMax:
-		motion.y += gravity
-	change_direction()
+				fireAttack()
 
+# ---------------------------------------------------------
+
+func fireAttack():
+	var strike_inst = strike.instance()
+	strike_inst.position = $PositionStrike.global_position
+	strike_inst.player_direction = atkDirection
+	strike_inst.scale.x = atkDirection
+	get_tree().get_root().add_child(strike_inst)
+#	strike.move = strike.position.global_translation
+#	strike.rotation = 
 
 func _on_atkTimer_timeout():
 	state = "normal"

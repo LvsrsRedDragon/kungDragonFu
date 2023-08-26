@@ -82,4 +82,7 @@ animation = "Crouch"
 [node name="atkTimer" type="Timer" parent="."]
 wait_time = 0.55
 
+[node name="PositionStrike" type="Position2D" parent="."]
+position = Vector2( 15, 0 )
+
 [connection signal="timeout" from="atkTimer" to="." method="_on_atkTimer_timeout"]
